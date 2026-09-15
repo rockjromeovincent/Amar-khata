@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -61,12 +63,16 @@ import com.example.models.TransactionType
 import com.example.ui.screens.transactions.components.AddCustomerBottomSheet
 import com.example.ui.screens.transactions.components.AddSupplierBottomSheet
 import com.example.ui.screens.transactions.components.QuickTransactionBottomSheet
+import com.example.ui.screens.transactions.components.SlideInTransactionContainer
 import com.example.ui.screens.transactions.components.TransactionDetailsBottomSheet
 import com.example.ui.screens.transactions.components.TransactionFormBottomSheet
 import com.example.ui.screens.transactions.components.TransactionItemCard
 import com.example.ui.theme.CashInGreen
 import com.example.ui.theme.CashOutRed
 import com.example.viewmodels.AccountingViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 val DATE_FILTERS = listOf("আজ", "চলতি সপ্তাহ", "চলতি মাস", "সকল")
 
@@ -331,18 +337,84 @@ fun TransactionsScreen(
                     }
                 }
             } else {
+                val dayFormatKey = remember { SimpleDateFormat("yyyyMMdd", Locale.getDefault()) }
+                val dayFormatLabel = remember { SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault()) }
+                val groupedTransactions = remember(filteredTransactions) {
+                    filteredTransactions.groupBy { tx -> dayFormatKey.format(Date(tx.date)) }
+                }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(filteredTransactions, key = { it.id }) { tx ->
-                        TransactionItemCard(
-                            transaction = tx,
-                            onClick = { selectedDetailTransaction = tx }
-                        )
+                    groupedTransactions.forEach { (_, dayList) ->
+                        val firstTx = dayList.first()
+                        val dayIncome = dayList.filter { it.isIncome }.sumOf { it.paidAmount }
+                        val dayExpense = dayList.filter { !it.isIncome }.sumOf { it.paidAmount }
+
+                        item(key = "header_${firstTx.id}_${firstTx.date}") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 4.dp, start = 4.dp, end = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CalendarToday,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = dayFormatLabel.format(Date(firstTx.date)),
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (dayIncome > 0) {
+                                        Text(
+                                            text = "+৳${dayIncome.toInt()}",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = CashInGreen
+                                            )
+                                        )
+                                    }
+                                    if (dayExpense > 0) {
+                                        Text(
+                                            text = "-৳${dayExpense.toInt()}",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = CashOutRed
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        itemsIndexed(dayList, key = { _, tx -> tx.id }) { index, tx ->
+                            SlideInTransactionContainer(
+                                itemIndex = index,
+                                modifier = Modifier.animateItem()
+                            ) {
+                                TransactionItemCard(
+                                    transaction = tx,
+                                    onClick = { selectedDetailTransaction = tx }
+                                )
+                            }
+                        }
                     }
+
                     item {
                         Spacer(modifier = Modifier.height(80.dp)) // Padding for FAB
                     }

@@ -58,6 +58,7 @@ import com.example.models.TransactionModel
 import com.example.models.TransactionType
 import com.example.ui.components.FintechMetricCard
 import com.example.ui.screens.transactions.components.QuickTransactionBottomSheet
+import com.example.ui.screens.transactions.components.RecentTransactionsListView
 import com.example.ui.screens.transactions.components.TransactionDetailsBottomSheet
 import com.example.ui.screens.transactions.components.TransactionFormBottomSheet
 import com.example.ui.screens.transactions.components.TransactionItemCard
@@ -88,8 +89,6 @@ fun HomeScreen(
     val quickSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val formSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val detailsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    val recentTransactions = allTransactions.take(5)
 
     LazyColumn(
         modifier = Modifier
@@ -330,62 +329,16 @@ fun HomeScreen(
             }
         }
 
-        // Recent Transactions Section Header
+        // Recent Transactions Section with Date Sorting & Color-Coded Income/Expense Differentiation
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = LocaleStrings.RECENT_TRANSACTIONS,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = LocaleStrings.VIEW_ALL,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier
-                        .clickable { onNavigateToTab(1) }
-                        .padding(4.dp)
-                )
-            }
-        }
-
-        // Live Transactions List
-        if (recentTransactions.isEmpty()) {
-            item {
-                Card(
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                    ) {
-                        Text(
-                            text = "এখনও কোনো লেনদেন এন্ট্রি করা হয়নি। + লেনদেন চাপুন।",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        } else {
-            items(recentTransactions, key = { it.id }) { tx ->
-                TransactionItemCard(
-                    transaction = tx,
-                    onClick = { selectedDetailTransaction = tx }
-                )
-            }
+            RecentTransactionsListView(
+                transactions = allTransactions,
+                onTransactionClick = { selectedDetailTransaction = it },
+                maxItems = 6,
+                showControls = true,
+                showDateHeaders = true,
+                onViewAllClick = { onNavigateToTab(1) }
+            )
         }
 
         item {

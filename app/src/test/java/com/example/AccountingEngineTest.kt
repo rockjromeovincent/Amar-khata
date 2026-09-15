@@ -137,4 +137,38 @@ class AccountingEngineTest {
         assertEquals(TransactionType.CASH_IN, TransactionType.fromId("cash_in"))
         assertEquals(TransactionType.CREDIT_SALE, TransactionType.fromId("credit_sale"))
     }
+
+    @Test
+    fun testIncomeAndExpenseClassification() {
+        val incomeTx1 = TransactionModel(id = "1", type = TransactionType.CASH_IN, amount = 1000.0, paidAmount = 1000.0, dueAmount = 0.0, date = 1000L)
+        val incomeTx2 = TransactionModel(id = "2", type = TransactionType.CUSTOMER_PAYMENT, amount = 500.0, paidAmount = 500.0, dueAmount = 0.0, date = 2000L)
+        val incomeTx3 = TransactionModel(id = "3", type = TransactionType.CREDIT_SALE, amount = 1500.0, paidAmount = 500.0, dueAmount = 1000.0, date = 3000L)
+
+        val expenseTx1 = TransactionModel(id = "4", type = TransactionType.CASH_OUT, amount = 300.0, paidAmount = 300.0, dueAmount = 0.0, date = 4000L)
+        val expenseTx2 = TransactionModel(id = "5", type = TransactionType.SUPPLIER_PAYMENT, amount = 800.0, paidAmount = 800.0, dueAmount = 0.0, date = 5000L)
+        val expenseTx3 = TransactionModel(id = "6", type = TransactionType.CREDIT_PURCHASE, amount = 2000.0, paidAmount = 1000.0, dueAmount = 1000.0, date = 6000L)
+
+        assertTrue(incomeTx1.isIncome)
+        assertTrue(incomeTx2.isIncome)
+        assertTrue(incomeTx3.isIncome)
+        org.junit.Assert.assertFalse(expenseTx1.isIncome)
+        org.junit.Assert.assertFalse(expenseTx2.isIncome)
+        org.junit.Assert.assertFalse(expenseTx3.isIncome)
+    }
+
+    @Test
+    fun testTransactionsSortedByDateDescending() {
+        val txOld = TransactionModel(id = "old", type = TransactionType.CASH_IN, amount = 100.0, paidAmount = 100.0, dueAmount = 0.0, date = 1000L)
+        val txMid = TransactionModel(id = "mid", type = TransactionType.CASH_OUT, amount = 200.0, paidAmount = 200.0, dueAmount = 0.0, date = 2000L)
+        val txNew = TransactionModel(id = "new", type = TransactionType.CREDIT_SALE, amount = 300.0, paidAmount = 300.0, dueAmount = 0.0, date = 3000L)
+
+        val unsorted = listOf(txMid, txOld, txNew)
+        val sortedDescending = unsorted.sortedWith(
+            compareByDescending<TransactionModel> { it.date }.thenByDescending { it.createdAt }
+        )
+
+        assertEquals("new", sortedDescending[0].id)
+        assertEquals("mid", sortedDescending[1].id)
+        assertEquals("old", sortedDescending[2].id)
+    }
 }

@@ -70,46 +70,12 @@ fun TransactionItemCard(
     onClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("dd MMM • hh:mm a", Locale.getDefault())
-    val isIncome = transaction.type == TransactionType.CASH_IN ||
-            transaction.type == TransactionType.CUSTOMER_PAYMENT ||
-            (transaction.type == TransactionType.CREDIT_SALE && transaction.paidAmount > 0)
+    val isIncome = transaction.isIncome
+    val flowColor = if (isIncome) CashInGreen else CashOutRed
 
-    val icon: ImageVector
-    val iconColor: Color
-    val typeTitle: String
-
-    when (transaction.type) {
-        TransactionType.CASH_IN -> {
-            icon = Icons.Filled.ArrowDownward
-            iconColor = CashInGreen
-            typeTitle = "টাকা পেলাম"
-        }
-        TransactionType.CASH_OUT -> {
-            icon = Icons.Filled.ArrowUpward
-            iconColor = CashOutRed
-            typeTitle = "টাকা দিলাম"
-        }
-        TransactionType.CREDIT_SALE -> {
-            icon = Icons.Filled.ShoppingCart
-            iconColor = DueOrange
-            typeTitle = "বাকিতে বিক্রি"
-        }
-        TransactionType.CREDIT_PURCHASE -> {
-            icon = Icons.Filled.LocalShipping
-            iconColor = Color(0xFF673AB7)
-            typeTitle = "বাকিতে ক্রয়"
-        }
-        TransactionType.CUSTOMER_PAYMENT -> {
-            icon = Icons.Filled.Payments
-            iconColor = CashInGreen
-            typeTitle = "কাস্টমার পেমেন্ট"
-        }
-        TransactionType.SUPPLIER_PAYMENT -> {
-            icon = Icons.Filled.AttachMoney
-            iconColor = CashOutRed
-            typeTitle = "সাপ্লায়ার পেমেন্ট"
-        }
-    }
+    val icon: ImageVector = if (isIncome) Icons.Filled.ArrowDownward else Icons.Filled.ArrowUpward
+    val flowLabel = if (isIncome) "আয়" else "ব্যয়"
+    val typeTitle = transaction.type.titleBn
 
     val partyName = transaction.customerName ?: transaction.supplierName ?: transaction.categoryOrSource.ifBlank { typeTitle }
 
@@ -131,15 +97,15 @@ fun TransactionItemCard(
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(44.dp)
                         .clip(CircleShape)
-                        .background(iconColor.copy(alpha = 0.12f))
+                        .background(flowColor.copy(alpha = 0.12f))
                 ) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = flowLabel,
+                        tint = flowColor,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
@@ -154,16 +120,33 @@ fun TransactionItemCard(
                             maxLines = 1
                         )
                         Spacer(modifier = Modifier.width(6.dp))
+                        // Income / Expense color-coded pill
                         Surface(
                             shape = RoundedCornerShape(4.dp),
-                            color = iconColor.copy(alpha = 0.1f)
+                            color = flowColor.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = flowLabel,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = flowColor
+                                ),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        // Specific type badge
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                         ) {
                             Text(
                                 text = typeTitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 9.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = iconColor
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
@@ -185,13 +168,12 @@ fun TransactionItemCard(
             Spacer(modifier = Modifier.width(8.dp))
 
             Column(horizontalAlignment = Alignment.End) {
+                val sign = if (isIncome) "+ " else "- "
                 Text(
-                    text = LocaleStrings.formatTaka(transaction.amount.toInt()),
+                    text = "$sign${LocaleStrings.formatTaka(transaction.amount.toInt())}",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (transaction.type == TransactionType.CASH_OUT || transaction.type == TransactionType.SUPPLIER_PAYMENT) CashOutRed
-                        else if (transaction.type == TransactionType.CREDIT_SALE) DueOrange
-                        else CashInGreen
+                        color = flowColor
                     )
                 )
 

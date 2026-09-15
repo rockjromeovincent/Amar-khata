@@ -16,4 +16,20 @@ data class TransactionModel(
     val categoryOrSource: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    val isIncome: Boolean
+        get() = when (type) {
+            TransactionType.CASH_IN,
+            TransactionType.CUSTOMER_PAYMENT,
+            TransactionType.CREDIT_SALE -> true
+            TransactionType.CASH_OUT,
+            TransactionType.SUPPLIER_PAYMENT,
+            TransactionType.CREDIT_PURCHASE -> false
+        }
+
+    val flowTypeBn: String
+        get() = if (isIncome) "আয়" else "ব্যয়"
+
+    val flowTypeEn: String
+        get() = if (isIncome) "Income" else "Expense"
+}
