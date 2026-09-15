@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -68,6 +69,7 @@ fun LoginScreen(
     authViewModel: AuthViewModel,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
+    onNavigateToPhoneAuth: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
     val uiState by authViewModel.uiState.collectAsState()
@@ -243,6 +245,16 @@ fun LoginScreen(
                             authViewModel.login(identifier, password, onLoginSuccess)
                         },
                         testTag = "login_submit_button"
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Phone Number OTP Sign In Option
+                    AmarKhataOutlinedButton(
+                        text = LocaleStrings.LOGIN_WITH_PHONE_BTN,
+                        leadingIcon = Icons.Filled.PhoneAndroid,
+                        onClick = onNavigateToPhoneAuth,
+                        testTag = "login_with_phone_button"
                     )
                 }
             }

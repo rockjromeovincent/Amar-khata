@@ -72,6 +72,44 @@ object LocaleStrings {
     const val NAV_REPORTS = "রিপোর্ট"
     const val NAV_MORE = "আরও"
 
+    // Phone Authentication & OTP
+    const val PHONE_AUTH_TITLE = "মোবাইল নম্বর দিয়ে প্রবেশ"
+    const val PHONE_AUTH_SUBTITLE = "আপনার ১১ সংখ্যার মোবাইল নম্বর দিন, আমরা একটি নিরাপদ ওটিপি (OTP) পাঠাবো"
+    const val PHONE_INPUT_LABEL = "মোবাইল নম্বর"
+    const val PHONE_INPUT_HINT = "০১৭১২-৩৪৫৬৭৮"
+    const val PHONE_PREFIX_BD = "+৮৮০"
+    const val SEND_OTP_BTN = "ওটিপি (OTP) পাঠান"
+    const val OTP_VERIFY_TITLE = "ওটিপি কোড যাচাইকরণ"
+    const val OTP_VERIFY_SUBTITLE = "নম্বরে পাঠানো ৬ সংখ্যার গোপন ওটিপি কোডটি লিখুন"
+    const val ENTER_OTP_LABEL = "৬ ডিজিটের ওটিপি কোড"
+    const val ENTER_OTP_HINT = "১২৩৪৫৬"
+    const val VERIFY_AND_LOGIN_BTN = "যাচাই করুন ও প্রবেশ করুন"
+    const val RESEND_OTP = "পুনরায় ওটিপি পাঠান"
+    const val RESEND_COUNTDOWN_SUFFIX = "সেকেন্ড পর পুনরায় পাঠাতে পারবেন"
+    const val CHANGE_PHONE_NUMBER = "নম্বর পরিবর্তন"
+    const val USE_TEST_OTP = "⚡ টেস্ট ওটিপি কোড (১২৩৪৫৬) ব্যবহার করুন"
+    const val LOGIN_WITH_PHONE_BTN = "📱 মোবাইল ওটিপি দিয়ে লগইন করুন"
+    const val LOGIN_WITH_PASSWORD_BTN = "🔑 পাসওয়ার্ড দিয়ে লগইন করুন"
+    const val OPERATOR_GP = "গ্রামীণফোন"
+    const val OPERATOR_BL = "বাংলালিংক"
+    const val OPERATOR_ROBI = "রবি"
+    const val OPERATOR_AIRTEL = "এয়ারটেল"
+    const val OPERATOR_TELETALK = "টেলিটক"
+    const val BD_FLAG_TEXT = "🇧🇩 বাংলাদেশ"
+
+    // Phone Validation & Error Messages
+    const val ERROR_PHONE_EMPTY = "অনুগ্রহ করে আপনার মোবাইল নম্বরটি লিখুন।"
+    const val ERROR_PHONE_INVALID_FORMAT = "সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (উদাঃ ০১৭১২-৩৪৫৬৭৮)।"
+    const val ERROR_PHONE_INVALID_OPERATOR = "অপরিচিত অপারেটর। ০১(৩-৯) দিয়ে শুরু হওয়া বাংলাদেশি মোবাইল নম্বর লিখুন।"
+    const val ERROR_OTP_EMPTY = "অনুগ্রহ করে ৬ ডিজিটের ওটিপি কোডটি লিখুন।"
+    const val ERROR_OTP_INVALID_LENGTH = "ওটিপি কোডটি অবশ্যই ৬ সংখ্যার হতে হবে।"
+    const val ERROR_OTP_INVALID = "ভুল ওটিপি কোড! অনুগ্রহ করে সঠিক কোড দিন অথবা পুনরায় কোড পাঠান।"
+    const val ERROR_OTP_EXPIRED = "ওটিপি কোডের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে পুনরায় কোড পাঠান।"
+    const val ERROR_OTP_QUOTA_EXCEEDED = "অতিরিক্ত অনুরোধ করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
+    const val ERROR_NETWORK = "ইন্টারনেট সংযোগ বিচ্ছিন্ন। আপনার নেটওয়ার্ক চেক করুন।"
+    const val SUCCESS_OTP_SENT = "আপনার নম্বরে ৬ ডিজিটের ওটিপি পাঠানো হয়েছে।"
+    const val SUCCESS_PHONE_VERIFIED = "ফোন নম্বর সফলভাবে যাচাই হয়েছে! প্রবেশ করা হচ্ছে..."
+
     // Dashboard / Home
     const val TODAY_SUMMARY = "আজকের হিসাব"
     const val TODAY_SALE = "আজকের বিক্রি"
@@ -166,6 +204,82 @@ object LocaleStrings {
             }
         }
         return sb.toString()
+    }
+
+    /**
+     * Converts Bengali digits to Western ASCII digits: ১২৩ -> 123
+     */
+    fun toEnglishDigits(input: String): String {
+        val banglaDigits = charArrayOf('০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯')
+        val sb = StringBuilder()
+        for (ch in input) {
+            val idx = banglaDigits.indexOf(ch)
+            if (idx != -1) {
+                sb.append(('0'.code + idx).toChar())
+            } else {
+                sb.append(ch)
+            }
+        }
+        return sb.toString()
+    }
+
+    /**
+     * Normalizes Bangladeshi phone number by converting Bengali digits, stripping spaces/dashes,
+     * and ensuring standard local 11-digit format starting with 01...
+     */
+    fun normalizePhoneNumber(rawInput: String): String {
+        val englishInput = toEnglishDigits(rawInput.trim())
+        // Keep only digits and optional leading plus
+        val digitsOnly = englishInput.replace("[^0-9+]".toRegex(), "")
+        val withoutCountryCode = when {
+            digitsOnly.startsWith("+880") -> digitsOnly.removePrefix("+880")
+            digitsOnly.startsWith("880") -> digitsOnly.removePrefix("880")
+            else -> digitsOnly
+        }
+        return if (withoutCountryCode.length == 10 && withoutCountryCode.startsWith("1")) {
+            "0$withoutCountryCode"
+        } else {
+            withoutCountryCode
+        }
+    }
+
+    /**
+     * Identifies Bangladeshi telecommunications operator from mobile number prefix.
+     */
+    fun detectBangladeshiOperator(rawPhone: String): String? {
+        val normalized = normalizePhoneNumber(rawPhone)
+        if (normalized.length < 3) return null
+        return when (normalized.substring(0, 3)) {
+            "017", "013" -> OPERATOR_GP
+            "019", "014" -> OPERATOR_BL
+            "018" -> OPERATOR_ROBI
+            "016" -> OPERATOR_AIRTEL
+            "015" -> OPERATOR_TELETALK
+            else -> null
+        }
+    }
+
+    /**
+     * Validates Bangladeshi 11-digit mobile number format (013..019).
+     */
+    fun isValidBangladeshiPhone(rawPhone: String): Boolean {
+        val normalized = normalizePhoneNumber(rawPhone)
+        if (normalized.length != 11) return false
+        val prefix = normalized.substring(0, 3)
+        return prefix in listOf("013", "014", "015", "016", "017", "018", "019")
+    }
+
+    /**
+     * Formats phone number into spaced groups for easy reading: 01712345678 -> 01712-345678 in Bengali digits
+     */
+    fun formatBanglaPhone(rawPhone: String): String {
+        val normalized = normalizePhoneNumber(rawPhone)
+        val formatted = if (normalized.length == 11) {
+            "${normalized.substring(0, 5)}-${normalized.substring(5)}"
+        } else {
+            normalized
+        }
+        return toBanglaDigits(formatted)
     }
 
     /**

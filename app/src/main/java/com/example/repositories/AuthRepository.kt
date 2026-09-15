@@ -1,12 +1,16 @@
 package com.example.repositories
 
+import android.app.Activity
 import com.example.core.database.dao.UserDao
 import com.example.core.database.entities.UserEntity
 import com.example.core.localization.LocaleStrings
 import com.example.models.AuthResult
 import com.example.models.UserProfile
 import com.example.services.FirebaseAuthService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class AuthRepository(
@@ -138,6 +142,86 @@ class AuthRepository(
             userDao.updateUser(user.copy(shopName = shopName, district = district))
         }
         userPreferencesRepository.updateShopProfile(shopName, district)
+    }
+
+    fun sendPhoneOtp(
+        activity: Activity?,
+        phoneNumber: String,
+        onCodeSent: (String) -> Unit,
+        onAutoVerified: suspend (UserProfile) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val cleanPhone = LocaleStrings.normalizePhoneNumber(phoneNumber)
+        firebaseAuthService.sendPhoneVerification(
+            activity = activity,
+            phoneNumber = cleanPhone,
+            onCodeSent = onCodeSent,
+            onAutoVerified = { profile ->
+                // Handled in coroutine scope by caller or persistence
+                val userEntity = UserEntity(
+                    uid = profile.uid.ifBlank { UUID.randomUUID().toString() },
+                    name = profile.name.ifBlank { "ব্যবসায়ী" },
+                    phone = cleanPhone,
+                    email = profile.email,
+                    shopName = profile.shopName.ifBlank { "আমার ব্যবসা" },
+                    district = profile.district.ifBlank { "ঢাকা" },
+                    password = "",
+                    registeredAt = System.currentTimeMillis(),
+                    lastLoginAt = System.currentTimeMillis(),
+                    isActive = true
+                )
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    val existing = userDao.getUserByPhone(cleanPhone)
+                    if (existing != null) {
+                        userDao.updateUser(existing.copy(lastLoginAt = System.currentTimeMillis()))
+                        userPreferencesRepository.saveUserSession(existing.toUserProfile())
+                        onAutoVerified(existing.toUserProfile())
+                    } else {
+                        userDao.insertUser(userEntity)
+                        userPreferencesRepository.saveUserSession(userEntity.toUserProfile())
+                        onAutoVerified(userEntity.toUserProfile())
+                    }
+                }
+            },
+            onError = onError
+        )
+    }
+
+    suspend fun verifyPhoneOtp(
+        phoneNumber: String,
+        verificationId: String,
+        otpCode: String
+    ): AuthResult<UserProfile> {
+        val cleanPhone = LocaleStrings.normalizePhoneNumber(phoneNumber)
+        val result = firebaseAuthService.verifyPhoneOtp(verificationId, otpCode, cleanPhone)
+        
+        if (result is AuthResult.Success) {
+            val existing = userDao.getUserByPhone(cleanPhone)
+            return if (existing != null) {
+                userDao.updateUser(existing.copy(lastLoginAt = System.currentTimeMillis()))
+                val profile = existing.toUserProfile()
+                userPreferencesRepository.saveUserSession(profile)
+                AuthResult.Success(profile)
+            } else {
+                val userEntity = UserEntity(
+                    uid = result.data.uid.ifBlank { UUID.randomUUID().toString() },
+                    name = result.data.name.ifBlank { "ব্যবসায়ী" },
+                    phone = cleanPhone,
+                    email = result.data.email,
+                    shopName = result.data.shopName.ifBlank { "আমার ব্যবসা" },
+                    district = result.data.district.ifBlank { "ঢাকা" },
+                    password = "",
+                    registeredAt = System.currentTimeMillis(),
+                    lastLoginAt = System.currentTimeMillis(),
+                    isActive = true
+                )
+                userDao.insertUser(userEntity)
+                val profile = userEntity.toUserProfile()
+                userPreferencesRepository.saveUserSession(profile)
+                AuthResult.Success(profile)
+            }
+        }
+        return result
     }
 
     suspend fun sendPasswordReset(identifier: String): AuthResult<Boolean> {

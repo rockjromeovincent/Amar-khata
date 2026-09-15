@@ -22,6 +22,7 @@ import com.example.repositories.UserPreferencesRepository
 import com.example.services.FirebaseAuthService
 import com.example.ui.screens.auth.ForgotPasswordScreen
 import com.example.ui.screens.auth.LoginScreen
+import com.example.ui.screens.auth.PhoneAuthScreen
 import com.example.ui.screens.auth.RegisterScreen
 import com.example.ui.screens.main.MainContainerScreen
 import com.example.ui.screens.onboarding.OnboardingScreen
@@ -157,6 +158,41 @@ fun AmarKhataApp(
                 onNavigateToForgotPassword = {
                     authViewModel.clearMessages()
                     navController.navigate(Screen.ForgotPassword.route)
+                },
+                onNavigateToPhoneAuth = {
+                    authViewModel.clearMessages()
+                    authViewModel.resetPhoneAuth()
+                    navController.navigate(Screen.PhoneAuth.route)
+                },
+                onLoginSuccess = {
+                    navController.navigate(Screen.MainContainer.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 3.1 Firebase Phone Authentication Screen
+        composable(
+            route = Screen.PhoneAuth.route,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(350)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(350)
+                )
+            }
+        ) {
+            PhoneAuthScreen(
+                authViewModel = authViewModel,
+                onNavigateBackToLogin = {
+                    authViewModel.clearMessages()
+                    navController.popBackStack()
                 },
                 onLoginSuccess = {
                     navController.navigate(Screen.MainContainer.route) {
