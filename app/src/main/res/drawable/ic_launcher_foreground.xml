@@ -3,7 +3,7 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/amar_khata_logo_1788239859198"
+        android:drawable="@drawable/amar_hisab_khata_logo"
         android:gravity="center" />
 </layer-list>
 

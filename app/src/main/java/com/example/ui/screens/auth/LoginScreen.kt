@@ -98,7 +98,7 @@ fun LoginScreen(
 
             // App Brand Header
             Image(
-                painter = painterResource(id = R.drawable.amar_khata_logo_1788239859198),
+                painter = painterResource(id = R.drawable.amar_hisab_khata_logo),
                 contentDescription = LocaleStrings.APP_NAME_BN,
                 modifier = Modifier
                     .size(80.dp)

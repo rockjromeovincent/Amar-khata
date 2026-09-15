@@ -1,5 +1,5 @@
 {
-  "name": "আমার খাতা",
+  "name": "Amar Hisab Khata",
   "description": "Bangladeshi fintech and digital ledger accounting app with Bangla-first localization, Firebase Auth, and dashboard navigation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

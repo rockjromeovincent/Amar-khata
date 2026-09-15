@@ -7,8 +7,8 @@ package com.example.core.localization
 object LocaleStrings {
 
     // App Branding
-    const val APP_NAME_BN = "আমার খাতা"
-    const val APP_NAME_EN = "Amar Khata"
+    const val APP_NAME_BN = "আমার হিসাব খাতা"
+    const val APP_NAME_EN = "Amar Hisab Khata"
     const val APP_TAGLINE_BN = "আপনার বিশ্বস্ত ডিজিটাল হিসাবের খাতা"
     const val APP_TAGLINE_EN = "Your Trusted Digital Ledger & Accounting"
 
